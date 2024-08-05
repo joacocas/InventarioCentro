@@ -110,8 +110,13 @@ class Inventario(tk.Frame):
         
         self.mostrar()
         
+        #Boton actualizar
         btn_actualizar = Button(frame2, text="Actualizar", bg="#959595", font=("rockwell", 12), command=self.actualizar_inventario)
-        btn_actualizar.place(x=440, y=480, width=260, height=50)
+        btn_actualizar.place(x=480, y=480, width=260, height=50)
+        
+        #Boton eliminar
+        btn_eliminar =  Button(frame2, text="Eliminar", bg="#959595", font=("rockwell", 12), command=self.eliminar_producto)
+        btn_eliminar.place(x=780, y=480, width=260, height=50)
         
     def eje_consulta(self, consulta, parametros=()):
         with sqlite3.connect(self.db_name) as conn:
@@ -148,6 +153,27 @@ class Inventario(tk.Frame):
             self.tre.delete(item)
         self.mostrar()
         messagebox.showinfo("Actualizacion", "El inventario ha sido actualizado")
+    
+    def eliminar_producto(self):
+        seleccion = self.tre.selection()
+        if not seleccion:
+            messagebox.showwarning(title="Eliminar producto", message="Seleccione un producto para eliminar")
+            return
+        item_id = self.tre.item(seleccion)["text"]
+
+        # Confirmar la eliminación
+        confirmar = messagebox.askyesno(title="Confirmar eliminación",
+                                    message=f"¿Está seguro que desea eliminar el producto con ID {item_id}?")
+        if confirmar:
+            try:
+                consulta = "DELETE FROM inventario WHERE id=?"
+                parametros = (item_id,)
+                self.eje_consulta(consulta, parametros)
+                self.actualizar_inventario()
+                messagebox.showinfo("Eliminación exitosa", "El producto ha sido eliminado.")
+            except Exception as e:
+                messagebox.showerror("Error", f"Error al eliminar el producto: {e}")
+        
         
     def registrar(self):
         result = self.tre.get_children()
