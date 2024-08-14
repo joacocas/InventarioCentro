@@ -164,7 +164,7 @@ class Ventas(tk.Frame):
         try:
             conn = sqlite3.connect(self.db_name)
             c =  conn.cursor()
-            c.execute("SELECT precio FROM inventario WHERE nombre = ?", (nombre_producto,))
+            c.execute("SELECT stock FROM inventario WHERE nombre = ?", (nombre_producto,))
             stock = c.fetchone()
             if stock and stock[0] >= cantidad:
                 return True
@@ -237,23 +237,23 @@ class Ventas(tk.Frame):
                     item = self.tree.item(child, "values")
                     nombre_producto = item[0]
                     cantidad_vendida = int(item[2])
-                    if self.verificar_stock(nombre_producto, cantidad_vendida):
-                        cantidad_vendida = int(item[2])
-                        precio_venta = float(item[1])  
-                        subtotal = cantidad_vendida * precio_venta
-                        c.execute("INSERT INTO ventas (nombre_articulo, valor_articulo, cantidad, subtotal) VALUES (?, ?, ?, ?)", 
-                                    (nombre_producto, precio_venta, cantidad_vendida, subtotal))
-                        c.execute("UPDATE inventario SET stock = stock - ? WHERE nombre = ?", (cantidad_vendida, nombre_producto))
-                    else:
+                    if not self.verificar_stock(nombre_producto, cantidad_vendida):
                         messagebox.showerror("Error", f"Stock insuficiente para el producto: {nombre_producto}")
-                    
+                        return
+                        
+                    precio_venta = float(item[1])  
+                    subtotal = cantidad_vendida * precio_venta
+                    c.execute("INSERT INTO ventas (nombre_articulo, valor_articulo, cantidad, subtotal) VALUES (?, ?, ?, ?)", 
+                                (nombre_producto, precio_venta, cantidad_vendida, subtotal))
+                    c.execute("UPDATE inventario SET stock = stock - ? WHERE nombre = ?", (cantidad_vendida, nombre_producto))
+                      
                 conn.commit()
                 messagebox.showinfo("Exito", "Venta registrada exitosamente")
                 
                 ventana_pago.destroy()
                 
             except sqlite3.Error as e:
-                conn.rollback
+                conn.rollback()
                 messagebox.showerror("Error", f"Error al registrar la venta: {e}")
             finally:
                 conn.close()

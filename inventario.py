@@ -7,9 +7,11 @@ import os
 
 class Inventario(tk.Frame):
     db_name = "database.db"
+    talle = None
     
     def __init__(self, padre):
         super().__init__(padre)
+        self.talle = None
         self.pack()
         self.conn =  sqlite3.connect(self.db_name)
         self.cursor = self.conn.cursor()
@@ -41,41 +43,53 @@ class Inventario(tk.Frame):
         
         #Label nombre
         lblnombre = Label(labelframe, text="Nombre: ", font=("rockwell", 12), bg="#dddddd")
-        lblnombre.place(x=10, y=30)
+        lblnombre.place(x=10, y=15)
         self.nombre = ttk.Entry(labelframe, font=("rockwell", 12))
-        self.nombre.place(x=140, y=20, width=240, height=40)
+        self.nombre.place(x=140, y=15, width=240, height=30)
         
         #Label proveedor
         lblproveedor = Label(labelframe, text="Proveedor:", font=("rockwell", 12), bg="#dddddd")
-        lblproveedor.place(x=10, y=90)
+        lblproveedor.place(x=10, y=75)
         self.proveedor = ttk.Entry(labelframe, font=("rockwell", 12))
-        self.proveedor.place(x=140, y=80, width=240, height=40)
+        self.proveedor.place(x=140, y=75, width=240, height=30)
         
         #Label precio
         lblprecio = Label(labelframe, text="Precio:", font=("rockwell", 12), bg="#dddddd")
-        lblprecio.place(x=10, y=150)
+        lblprecio.place(x=10, y=135)
         self.precio = ttk.Entry(labelframe, font=("rockwell", 12))
-        self.precio.place(x=140, y=140, width=240, height=40)
+        self.precio.place(x=140, y=135, width=240, height=30)
         
         #Label costo
         lblcosto = Label(labelframe, text="Costo:", font=("rockwell", 12), bg="#dddddd")
-        lblcosto.place(x=10, y=210)
+        lblcosto.place(x=10, y=195)
         self.costo = ttk.Entry(labelframe, font=("rockwell", 12))
-        self.costo.place(x=140, y=200, width=240, height=40)
+        self.costo.place(x=140, y=195, width=240, height=30)
         
         #Label stock
         lblstock = Label(labelframe, text="Stock:", font=("rockwell", 12), bg="#dddddd")
-        lblstock.place(x=10, y=270)
+        lblstock.place(x=10, y=255)
         self.stock = ttk.Entry(labelframe, font=("rockwell", 12))
-        self.stock.place(x=140, y=260, width=240, height=40)
+        self.stock.place(x=140, y=255, width=240, height=30)
+        
+        #Label estado
+        lblestado = Label(labelframe, text="Estado:", font=("rockwell", 12), bg="#dddddd")
+        lblestado.place(x=10, y=315)
+        self.estado = ttk.Entry(labelframe, font=("rockwell", 12))
+        self.estado.place(x=140, y=315, width=240, height=30)
+        
+        #Label Talle
+        lbltalle = Label(labelframe, text="T/M:", font=("rockwell", 12), bg="#dddddd")
+        lbltalle.place(x=10, y=375)
+        self.talle = ttk.Entry(labelframe, font=("rockwell", 12))
+        self.talle.place(x=140, y=375, width=240, height=30)
         
         #Boton agregar
         boton_agregar = tk.Button(labelframe, text="Ingresar", font=("rockwell", 12), bg="#959595", command=self.registrar)
-        boton_agregar.place(x=80, y=340, width=240, height=40)
+        boton_agregar.place(x=20, y=420, width=160, height=40)
         
         #Boton editar
         boton_editar = tk.Button(labelframe, text="Editar", font=("rockwell", 12), bg="#959595", command=self.editar_producto)
-        boton_editar.place(x=80, y=400, width=240, height=40)
+        boton_editar.place(x=210, y=420, width=160, height=40)
         
         #Tabla
         treFrame = Frame(frame2, bg="white")
@@ -88,7 +102,7 @@ class Inventario(tk.Frame):
         scroll_x.pack(side=BOTTOM, fill=X)
         
         self.tre = ttk.Treeview(treFrame, yscrollcommand=scroll_y.set, xscrollcommand=scroll_x.set, height=40,
-                                columns=("ID", "PRODUCTO", "PROVEEDOR", "PRECIO", "COSTO", "STOCK"), show="headings")
+                                columns=("ID", "PRODUCTO", "PROVEEDOR", "PRECIO", "COSTO", "STOCK", "ESTADO", "TALLE",), show="headings")
         self.tre.pack(expand=True, fill=BOTH)
         
         scroll_y.config(command=self.tre.yview)
@@ -100,6 +114,8 @@ class Inventario(tk.Frame):
         self.tre.heading("PRECIO", text="Precio")
         self.tre.heading("COSTO", text="Costo")
         self.tre.heading("STOCK", text="Stock")
+        self.tre.heading("ESTADO", text="Estado")
+        self.tre.heading("TALLE", text="T/M")
         
         self.tre.column("ID", width=50, anchor="center")
         self.tre.column("PRODUCTO", width=150, anchor="center")
@@ -107,6 +123,8 @@ class Inventario(tk.Frame):
         self.tre.column("PRECIO", width=100, anchor="center")
         self.tre.column("COSTO", width=100, anchor="center")
         self.tre.column("STOCK", width=50, anchor="center")
+        self.tre.column("ESTADO", width=70, anchor="center")
+        self.tre.column("TALLE", width=150, anchor="center")
         
         self.mostrar()
         
@@ -125,8 +143,8 @@ class Inventario(tk.Frame):
             conn.commit()
         return result
     
-    def validacion(self, nombre, proveedor, precio, costo, stock):
-        if not nombre and proveedor and precio and costo and stock:
+    def validacion(self, nombre, proveedor, precio, costo, stock, estado, talle):
+        if not nombre and proveedor and precio and costo and stock and estado and talle:
             return False
         try:
             float(precio)
@@ -146,7 +164,7 @@ class Inventario(tk.Frame):
             except ValueError:
                 precio_mil = elem[3]
                 costo_mil = elem[4]
-            self.tre.insert("", 0, text=elem[0], values=(elem[0], elem[1], elem[2], precio_mil, costo_mil, elem[5]))
+            self.tre.insert("", 0, text=elem[0], values=(elem[0], elem[1], elem[2], precio_mil, costo_mil, elem[5], elem[6], elem[7]))
             
     def actualizar_inventario(self):
         for item in self.tre.get_children():
@@ -184,10 +202,12 @@ class Inventario(tk.Frame):
         precio =  self.precio.get()
         costo =  self.costo.get()
         stock =  self.stock.get()
-        if self.validacion(nombre, proveedor, precio, costo, stock):
+        estado = self.estado.get()
+        talle = self.talle.get()
+        if self.validacion(nombre, proveedor, precio, costo, stock, estado, talle):
             try:
-                consulta = "INSERT INTO inventario VALUES(?, ?, ?, ?, ?, ?)"
-                parametros = (None, nombre, proveedor, precio, costo, stock)
+                consulta = "INSERT INTO inventario VALUES(?, ?, ?, ?, ?, ?, ?, ?)"
+                parametros = (None, nombre, proveedor, precio, costo, stock, estado, talle)
                 self.eje_consulta(consulta, parametros)
                 self.mostrar()
                 self.nombre.delete(0, END)
@@ -195,6 +215,8 @@ class Inventario(tk.Frame):
                 self.precio.delete(0, END)
                 self.costo.delete(0, END)
                 self.stock.delete(0, END)
+                self.estado.delete(0, END)
+                self.talle.delete(0, END)
             except Exception as e:
                 messagebox.showwarning(title="Error", message=f"Error al registrar el producto: {e}")
         else: 
@@ -216,34 +238,46 @@ class Inventario(tk.Frame):
         ventana_editar.config(bg="#dddddd")
         
         lbl_nombre = Label(ventana_editar, text="Nombre:", font=("rockwell", 12), bg="#dddddd")
-        lbl_nombre.grid(row=0, column=0, padx=10, pady=10)
+        lbl_nombre.grid(row=0, column=0, padx=20, pady=10)
         entry_nombre = Entry(ventana_editar, font=("rockwell", 12))
-        entry_nombre.grid(row=0, column=1, padx=10, pady=10)
+        entry_nombre.grid(row=0, column=1, padx=20, pady=10)
         entry_nombre.insert(0, item_values[1])
         
         lbl_proveedor = Label(ventana_editar, text="Proveedor:", font=("rockwell", 12), bg="#dddddd")
-        lbl_proveedor.grid(row=1, column=0, padx=10, pady=10)
+        lbl_proveedor.grid(row=1, column=0, padx=20, pady=10)
         entry_proveedor = Entry(ventana_editar, font=("rockwell", 12))
-        entry_proveedor.grid(row=1, column=1, padx=10, pady=10)
+        entry_proveedor.grid(row=1, column=1, padx=20, pady=10)
         entry_proveedor.insert(0, item_values[2])
         
         lbl_precio = Label(ventana_editar, text="Precio:", font=("rockwell", 12), bg="#dddddd")
-        lbl_precio.grid(row=2, column=0, padx=10, pady=10)
+        lbl_precio.grid(row=2, column=0, padx=20, pady=10)
         entry_precio = Entry(ventana_editar, font=("rockwell", 12))
-        entry_precio.grid(row=2, column=1, padx=10, pady=10)
+        entry_precio.grid(row=2, column=1, padx=20, pady=10)
         entry_precio.insert(0, item_values[3].split()[0].replace(",", ""))
         
         lbl_costo = Label(ventana_editar, text="Costo:", font=("rockwell", 12), bg="#dddddd")
-        lbl_costo.grid(row=3, column=0, padx=10, pady=10)
+        lbl_costo.grid(row=3, column=0, padx=20, pady=10)
         entry_costo = Entry(ventana_editar, font=("rockwell", 12))
-        entry_costo.grid(row=3, column=1, padx=10, pady=10)
+        entry_costo.grid(row=3, column=1, padx=20, pady=10)
         entry_costo.insert(0, item_values[4].split()[0].replace(",", ""))
         
         lbl_stock = Label(ventana_editar, text="Stock:", font=("rockwell", 12), bg="#dddddd")
-        lbl_stock.grid(row=4, column=0, padx=10, pady=10)
+        lbl_stock.grid(row=4, column=0, padx=20, pady=10)
         entry_stock = Entry(ventana_editar, font=("rockwell", 12))
-        entry_stock.grid(row=4, column=1, padx=10, pady=10)
+        entry_stock.grid(row=4, column=1, padx=20, pady=10)
         entry_stock.insert(0, item_values[5])
+        
+        lbl_estado = Label(ventana_editar, text="Estado:", font=("rockwell", 12), bg="#dddddd")
+        lbl_estado.grid(row=5, column=0, padx=20, pady=10)
+        entry_estado = Entry(ventana_editar, font=("rockwell", 12))
+        entry_estado.grid(row=5, column=1, padx=20, pady=10)
+        entry_estado.insert(0, item_values[6])
+        
+        lbl_talle = Label(ventana_editar, text="T/M:", font=("rockwell", 12), bg="#dddddd")
+        lbl_talle.grid(row=6, column=0, padx=20, pady=10)
+        entry_talle = Entry(ventana_editar, font=("rockwell", 12))
+        entry_talle.grid(row=6, column=1, padx=20, pady=10)
+        entry_talle.insert(0, item_values[7])
         
         def guardar_cambios():
             nombre = entry_nombre.get()
@@ -251,7 +285,9 @@ class Inventario(tk.Frame):
             precio = entry_precio.get()
             costo =  entry_costo.get()
             stock = entry_stock.get()
-            if not (nombre and proveedor and precio and costo and stock):
+            estado = entry_estado.get()
+            talle = entry_talle.get()
+            if not (nombre and proveedor and precio and costo and stock and estado and talle):
                 messagebox.showwarning("Guardar cambios", "Rellene todos los campos")
                 return
             try:
@@ -261,11 +297,11 @@ class Inventario(tk.Frame):
                 messagebox.showwarning("Guardar cambios", "Ingrese valores numericos validos para precio y costo")
                 return
             
-            consulta = "UPDATE inventario SET nombre=?, proveedor=?, precio=?, costo=?, stock=? WHERE id=?"
-            parametros = (nombre, proveedor, precio, costo, stock, item_id)
+            consulta = "UPDATE inventario SET nombre=?, proveedor=?, precio=?, costo=?, stock=?, estado=?, talle=? WHERE id=?"
+            parametros = (nombre, proveedor, precio, costo, stock, estado, talle, item_id)
             self.eje_consulta(consulta, parametros)
             self.actualizar_inventario()
             ventana_editar.destroy()
         
         btn_guardar = Button(ventana_editar, text="Guardar cambios", bg="#959595", font=("rockwell", 12), command=guardar_cambios)
-        btn_guardar.place(x=80, y=310, width=240, height=40)
+        btn_guardar.place(x=80, y=340, width=240, height=40)
